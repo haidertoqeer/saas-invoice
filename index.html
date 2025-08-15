@@ -1,0 +1,666 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Smart Invoice & Quote Generator</title>
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Bootstrap 5.3 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Font Awesome -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+  <link rel="icon" type="image/png" href="favicon.png" />
+  <style>
+    :root{
+      --accent: #1E90FF;
+      --accent-rgb: 30,144,255;
+      --ink: #0b0b0b;
+      --muted: #6b7280;
+      --paper: #ffffff;
+      --paper-bg: #f7f7f2;
+    }
+    html,body{height:100%; background:var(--paper-bg); font-family: "Barlow", system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; color:var(--ink)}
+    .app-wrap{min-height:100%; display:flex; flex-direction:column}
+    .nav-shadow{box-shadow: 0 6px 20px rgba(0,0,0,.06)}
+    .brand-badge{letter-spacing:.3px}
+
+    /* Layout */
+    .builder{display:grid; grid-template-columns: 360px 1fr; gap:18px; padding:18px}
+    @media (max-width: 992px){ .builder{grid-template-columns: 1fr; padding:12px} }
+
+    /* Controls */
+    .panel{background:#fff; border-radius:16px; box-shadow:0 10px 30px rgba(0,0,0,.06); overflow:hidden}
+    .panel .panel-hd{padding:14px 16px; background: rgba(var(--accent-rgb), .06); border-bottom:1px solid rgba(var(--accent-rgb), .25)}
+    .panel .panel-bd{padding:16px}
+    .form-text{color:var(--muted)}
+    .accent-chip{display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border-radius:999px; background:rgba(var(--accent-rgb), .08); color:var(--accent); font-weight:600; font-size:.9rem}
+
+    /* Invoice preview (A4) */
+    .invoice-stage{display:flex; justify-content:center; align-items:flex-start; padding:12px}
+    .invoice-paper{width:210mm; min-height:297mm; background:var(--paper); color:#111; box-shadow:0 20px 50px rgba(0,0,0,.12); padding:18mm 16mm; position:relative; border-radius:10px}
+    .invoice-header{display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:18px}
+    .logo-box{display:flex; align-items:center; gap:12px}
+    .logo-box img{max-height:56px; max-width:180px; object-fit:contain}
+    .logo-placeholder{height:56px; width:180px; border:2px dashed rgba(0,0,0,.15); border-radius:10px; display:grid; place-items:center; color:#888; font-size:.9rem}
+    .title-badge{font-weight:800; letter-spacing:.6px; text-transform:uppercase; color:var(--accent);}
+
+    .addr-block{white-space:pre-line; color:#111}
+    .muted{color:#666}
+
+    .table-items{width:100%; border-collapse:collapse; margin-top:10px}
+    .table-items thead th{font-weight:700; background: rgba(var(--accent-rgb), .10); color: var(--accent); padding:10px; border-bottom:1px solid rgba(var(--accent-rgb), .35)}
+    .table-items tbody td{padding:10px; border-bottom:1px solid #f0f0f0}
+    /* ultra‑light zebra striping using accent with transparency */
+    .table-items tbody tr:nth-child(odd) td{background: rgba(var(--accent-rgb), .028)}
+    .table-items tbody tr:nth-child(even) td{background: rgba(var(--accent-rgb), .012)}
+    .table-items tfoot td{padding:8px 10px}
+
+    .total-line{display:flex; justify-content:space-between; gap:10px; padding:6px 0}
+    .total-line strong{letter-spacing:.3px}
+    .total-box{margin-top:10px; border:1px solid rgba(var(--accent-rgb), .25); border-radius:12px; padding:10px 12px; background:rgba(var(--accent-rgb), .05)}
+
+    .qr-box{display:flex; gap:10px; align-items:center}
+    #qr{border:1px solid #eee; border-radius:8px; padding:6px; background:#fff}
+
+    .signature{height:70px; display:block}
+    .sig-line{border-top:1px solid #ccc; width:220px}
+
+    .watermark{position:absolute; inset:auto 10mm 10mm auto; color:#94a3b8; font-weight:600; opacity:.4}
+
+    /* Print */
+    @media print {
+      body{background:#fff}
+      .no-print{display:none !important}
+      .invoice-paper{box-shadow:none; width:auto; min-height:auto; padding:0; border-radius:0}
+    }
+  </style>
+</head>
+<body>
+<div class="app-wrap">
+  <nav class="navbar bg-white sticky-top nav-shadow">
+    <div class="container-fluid px-3">
+      <span class="navbar-brand mb-0 h5 d-flex align-items-center gap-2">
+        <span class="badge text-bg-light border brand-badge"><i class="fa-solid fa-bolt"></i> Micro‑SaaS</span>
+        Smart Invoice & Quote Generator
+      </span>
+      <div class="d-flex gap-2 no-print">
+        <button id="btnSaveLocal" class="btn btn-outline-secondary btn-sm"><i class="fa-regular fa-floppy-disk"></i> Save</button>
+        <button id="btnLoadLocal" class="btn btn-outline-secondary btn-sm"><i class="fa-solid fa-rotate"></i> Load</button>
+        <button id="btnClear" class="btn btn-outline-secondary btn-sm"><i class="fa-regular fa-trash-can"></i> Clear</button>
+        <button id="btnPNG" class="btn btn-outline-primary btn-sm"><i class="fa-regular fa-image"></i> PNG</button>
+        <button id="btnPDF" class="btn btn-primary btn-sm"><i class="fa-regular fa-file-pdf"></i> PDF</button>
+        <button id="btnPrint" class="btn btn-dark btn-sm"><i class="fa-solid fa-print"></i> Print</button>
+      </div>
+    </div>
+  </nav>
+
+  <main class="builder">
+    <!-- Control Panel -->
+    <section class="panel no-print" aria-label="Controls">
+      <div class="panel-hd d-flex justify-content-between align-items-center">
+        <strong>Builder Controls</strong>
+        <span class="accent-chip"><i class="fa-solid fa-droplet"></i> Accent</span>
+      </div>
+      <div class="panel-bd">
+        <div class="mb-3">
+          <label class="form-label">Accent Color</label>
+          <input type="color" id="accentColor" class="form-control form-control-color" value="#1E90FF" title="Pick accent" />
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Logo</label>
+          <input type="file" id="logoInput" accept="image/*" class="form-control" />
+          <div class="form-text">Optional. PNG/SVG/JPG.</div>
+        </div>
+
+        <div class="row g-3">
+          <div class="col-6">
+            <label class="form-label">Document Type</label>
+            <select id="docType" class="form-select">
+              <option value="Invoice">Invoice</option>
+              <option value="Quote">Quote</option>
+              <option value="Proforma">Proforma</option>
+            </select>
+          </div>
+          <div class="col-6">
+            <label class="form-label">Currency</label>
+            <select id="currency" class="form-select">
+              <option value="USD">USD $</option>
+              <option value="EUR">EUR €</option>
+              <option value="GBP">GBP £</option>
+              <option value="PKR">PKR ₨</option>
+              <option value="INR">INR ₹</option>
+              <option value="AED">AED د.إ</option>
+            </select>
+          </div>
+        </div>
+
+        <hr>
+        <div class="mb-3">
+          <label class="form-label">Your Business Details</label>
+          <textarea id="fromText" class="form-control" rows="5" placeholder="Your Company\nStreet\nCity, ZIP\nCountry\nVAT / NTN\nemail@you.com\n+92 3xx xxxxxxx"></textarea>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Bill To</label>
+          <textarea id="toText" class="form-control" rows="5" placeholder="Client Name\nCompany\nStreet\nCity, ZIP\nCountry\nclient@email.com"></textarea>
+        </div>
+
+        <div class="row g-3 mb-2">
+          <div class="col-6">
+            <label class="form-label"># Number</label>
+            <div class="input-group">
+              <input id="docNumber" class="form-control" placeholder="INV-YYYYMMDD-001" />
+              <button class="btn btn-outline-secondary" type="button" id="btnGenNum" title="Generate"><i class="fa-solid fa-wand-magic-sparkles"></i></button>
+            </div>
+            <div class="form-text">Auto-generated; you can edit.</div>
+          </div>
+          <div class="col-6">
+            <label class="form-label">Date</label>
+            <input id="docDate" type="date" class="form-control" />
+          </div>
+        </div>
+        <div class="row g-3 mb-3">
+          <div class="col-6">
+            <label class="form-label">Due Date</label>
+            <input id="docDue" type="date" class="form-control" />
+          </div>
+          <div class="col-6">
+            <label class="form-label">Payment Link (for QR)</label>
+            <input id="payLink" class="form-control" placeholder="https://pay.me/your-link" />
+            <div class="form-check form-switch mt-2">
+              <input class="form-check-input" type="checkbox" id="enableQR" checked>
+              <label class="form-check-label" for="enableQR">Show scan-to-pay QR</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="row g-3">
+          <div class="col-6">
+            <label class="form-label">Tax %</label>
+            <input id="taxPct" type="number" min="0" step="0.01" class="form-control" value="0" />
+          </div>
+          <div class="col-6">
+            <label class="form-label">Discount %</label>
+            <input id="discPct" type="number" min="0" step="0.01" class="form-control" value="0" />
+          </div>
+        </div>
+
+        <div class="row g-3 mt-1">
+          <div class="col-6">
+            <label class="form-label">Shipping</label>
+            <input id="shipping" type="number" min="0" step="0.01" class="form-control" value="0" />
+          </div>
+          <div class="col-6">
+            <label class="form-label">Notes</label>
+            <input id="notes" class="form-control" placeholder="Thank you for your business!" />
+          </div>
+        </div>
+
+        <hr>
+        <div class="d-flex align-items-center justify-content-between mb-2">
+          <strong>Line Items</strong>
+          <button id="addItem" class="btn btn-sm btn-outline-primary"><i class="fa-solid fa-plus"></i> Add Item</button>
+        </div>
+        <div id="itemsEditor" class="vstack gap-2"></div>
+
+        <div class="alert alert-light border mt-3 mb-0">
+          <div class="small text-muted">Tip: Save frequently. Your data stays in your browser (localStorage).</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Invoice Preview -->
+    <section class="panel" aria-label="Preview">
+      <div class="panel-hd d-flex align-items-center justify-content-between">
+        <strong>Live Preview</strong>
+        <span class="text-muted small">A4 — print & PDF safe</span>
+      </div>
+      <div class="panel-bd invoice-stage">
+        <div id="invoicePaper" class="invoice-paper">
+          <div class="invoice-header">
+            <div class="logo-box">
+              <img id="logoImg" alt="Logo" style="display:none" />
+            </div>
+            <div class="text-end">
+              <div id="docTypeBadge" class="title-badge h4 mb-1">INVOICE</div>
+              <div class="small"><span class="text-muted">No.</span> <span id="vDocNumber">INV-1001</span></div>
+              <div class="small"><span class="text-muted">Date</span> <span id="vDocDate">—</span></div>
+              <div class="small"><span class="text-muted">Due</span> <span id="vDocDue">—</span></div>
+            </div>
+          </div>
+
+          <div id="addrRow" class="row g-4 mb-2">
+            <div id="fromCol" class="col-7">
+              <div class="muted small">From</div>
+              <pre id="vFrom" class="addr-block"></pre>
+            </div>
+            <div id="toCol" class="col-5">
+              <div class="muted small">Bill To</div>
+              <pre id="vTo" class="addr-block"></pre>
+            </div>
+          </div>
+
+          <table class="table-items">
+            <thead>
+              <tr>
+                <th style="width:44%">Description</th>
+                <th style="width:14%" class="text-end">Qty</th>
+                <th style="width:20%" class="text-end">Price</th>
+                <th style="width:22%" class="text-end">Amount</th>
+              </tr>
+            </thead>
+            <tbody id="vItems"></tbody>
+          </table>
+
+          <div class="row mt-2">
+            <div class="col-7">
+              <div id="payBlock" class="mb-2">
+                <div class="muted small mb-1">Payment</div>
+                <div class="qr-box">
+                  <div id="qr"></div>
+                  <div class="small text-muted">Scan to pay via link.</div>
+                </div>
+              </div>
+              <div id="notesBlock" class="mt-3">
+                <div class="muted small">Notes</div>
+                <div id="vNotes" class="small">Thank you for your business!</div>
+              </div>
+              <div id="sigBlock" class="mt-4">
+                <div class="muted small mb-2">Authorized Signature</div>
+                <img id="vSignature" class="signature" alt="Signature" />
+                <div class="sig-line mt-2"></div>
+              </div>
+            </div>
+            <div class="col-5">
+              <div class="total-box">
+                <div class="total-line"><span>Subtotal</span><span id="vSubtotal">$0.00</span></div>
+                <div class="total-line"><span>Discount (<span id="vDiscPct">0</span>%)</span><span id="vDiscount">$0.00</span></div>
+                <div class="total-line"><span>Tax (<span id="vTaxPct">0</span>%)</span><span id="vTax">$0.00</span></div>
+                <div class="total-line"><span>Shipping</span><span id="vShipping">$0.00</span></div>
+                <div class="total-line border-top pt-2 mt-1"><strong>Total</strong><strong id="vTotal">$0.00</strong></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- <div class="watermark"><i class="fa-solid fa-bolt me-1"></i>Generated with your micro‑tool</div> -->
+        </div>
+      </div>
+
+      <!-- Signature Pad Drawer -->
+      <div class="panel-bd no-print pt-0">
+        <details>
+          <summary class="mb-2"><i class="fa-solid fa-pen-nib me-2"></i>Add / Update Signature</summary>
+          <div class="row g-3 align-items-start">
+            <div class="col-8 col-md-6">
+              <canvas id="sigPad" width="520" height="140" style="width:100%; background:#fff; border:1px dashed #cbd5e1; border-radius:8px"></canvas>
+            </div>
+            <div class="col-4 col-md-6 d-flex gap-2">
+              <button id="sigClear" class="btn btn-outline-secondary"><i class="fa-regular fa-trash-can"></i> Clear</button>
+              <button id="sigSave" class="btn btn-outline-primary"><i class="fa-regular fa-floppy-disk"></i> Use Signature</button>
+            </div>
+          </div>
+        </details>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- Vendors -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+<script>
+(function(){
+  const $ = (sel, root=document) => root.querySelector(sel);
+  const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+  const currencyMap = { USD: '$', EUR: '€', GBP: '£', PKR: '₨', INR: '₹', AED: 'د.إ' };
+
+  // Elements
+  const accentColor = $('#accentColor');
+  const logoInput = $('#logoInput');
+  const logoImg = $('#logoImg');
+  const logoPh = $('#logoPh');
+  const docType = $('#docType');
+  const currency = $('#currency');
+  const fromText = $('#fromText');
+  const toText = $('#toText');
+  const docNumber = $('#docNumber');
+  const docDate = $('#docDate');
+  const docDue = $('#docDue');
+  const payLink = $('#payLink');
+  const taxPct = $('#taxPct');
+  const discPct = $('#discPct');
+  const shipping = $('#shipping');
+  const notes = $('#notes');
+  const itemsEditor = $('#itemsEditor');
+  const addItemBtn = $('#addItem');
+  const enableQR = $('#enableQR');
+  const btnGenNum = $('#btnGenNum');
+
+  const vDocNumber = $('#vDocNumber');
+  const vDocDate = $('#vDocDate');
+  const vDocDue = $('#vDocDue');
+  const vFrom = $('#vFrom');
+  const vTo = $('#vTo');
+  const vItems = $('#vItems');
+  const vSubtotal = $('#vSubtotal');
+  const vTax = $('#vTax');
+  const vTaxPct = $('#vTaxPct');
+  const vDiscPct = $('#vDiscPct');
+  const vDiscount = $('#vDiscount');
+  const vShipping = $('#vShipping');
+  const vTotal = $('#vTotal');
+  const docTypeBadge = $('#docTypeBadge');
+  const invoicePaper = $('#invoicePaper');
+
+  const btnSaveLocal = $('#btnSaveLocal');
+  const btnLoadLocal = $('#btnLoadLocal');
+  const btnClear = $('#btnClear');
+  const btnPDF = $('#btnPDF');
+  const btnPNG = $('#btnPNG');
+  const btnPrint = $('#btnPrint');
+
+  // QR
+  const qrBox = $('#qr');
+  let qr;
+
+  function fmt(num){
+    const sym = currencyMap[currency.value] || '';
+    const n = Number(num||0);
+    return (currency.value==='AED' ? sym+' '+n.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2}) : sym+n.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2}));
+  }
+  // --- Auto invoice number generator ---
+  const SEQ_KEY = 'smart-invoice-seq';
+  function docPrefix(){ const map={Invoice:'INV', Quote:'QUO', Proforma:'PRO'}; return map[docType.value]||'INV'; }
+  function nextInvoiceNumber(){
+    const today = new Date();
+    const y=today.getFullYear(); const m=String(today.getMonth()+1).padStart(2,'0'); const d=String(today.getDate()).padStart(2,'0');
+    const dateKey = `${y}${m}${d}`;
+    let data={}; try{ data = JSON.parse(localStorage.getItem(SEQ_KEY)||'{}'); }catch(_){ data={}; }
+    const key = `${docPrefix()}-${dateKey}`;
+    const seq = (data[key]||0) + 1; data[key]=seq; localStorage.setItem(SEQ_KEY, JSON.stringify(data));
+    return `${docPrefix()}-${dateKey}-${String(seq).padStart(3,'0')}`;
+  }
+
+  // Accent binding
+  function applyAccent(){
+    const hex = (accentColor.value||'#1E90FF').trim();
+    document.documentElement.style.setProperty('--accent', hex);
+    const rgb = hexToRgb(hex);
+    if(rgb){ document.documentElement.style.setProperty('--accent-rgb', `${rgb.r},${rgb.g},${rgb.b}`); }
+  }
+  function hexToRgb(hex){
+    const m = hex.replace('#','');
+    if(m.length===3){
+      const r=parseInt(m[0]+m[0],16), g=parseInt(m[1]+m[1],16), b=parseInt(m[2]+m[2],16);
+      return {r,g,b};
+    } else if(m.length===6){
+      const r=parseInt(m.slice(0,2),16), g=parseInt(m.slice(2,4),16), b=parseInt(m.slice(4,6),16);
+      return {r,g,b};
+    }
+    return null;
+  }
+
+  // Logo upload
+  logoInput.addEventListener('change', (e)=>{
+    const file = e.target.files && e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      logoImg.src = reader.result; logoImg.style.display = 'block'; if(logoPh) logoPh.style.display = 'none'; saveLocal();
+    };
+    reader.readAsDataURL(file);
+  });
+
+  // Items Editor
+  function makeItemRow(data={desc:'Service', qty:1, price:100}){
+    const row = document.createElement('div');
+    row.className = 'row g-2 align-items-center';
+    row.innerHTML = `
+      <div class="col-6"><input class="form-control item-desc" placeholder="Description" value="${data.desc||''}"></div>
+      <div class="col-2"><input type="number" min="0" step="0.01" class="form-control item-qty text-end" value="${data.qty||0}"></div>
+      <div class="col-3"><input type="number" min="0" step="0.01" class="form-control item-price text-end" value="${data.price||0}"></div>
+      <div class="col-1 d-grid"><button class="btn btn-outline-danger btn-sm item-del" title="Remove"><i class="fa-solid fa-xmark"></i></button></div>
+    `;
+    itemsEditor.appendChild(row);
+
+    // Events
+    row.addEventListener('input', ()=>{ renderItems(); saveLocal(); });
+    $('.item-del', row).addEventListener('click', ()=>{ row.remove(); renderItems(); saveLocal(); });
+  }
+
+  function readItems(){
+    return $$('.row', itemsEditor).map(row=>({
+      desc: $('.item-desc', row).value,
+      qty: parseFloat($('.item-qty', row).value)||0,
+      price: parseFloat($('.item-price', row).value)||0
+    })).filter(it=>it.desc.trim()!=='' && (it.qty>0 || it.price>0));
+  }
+
+  function renderItems(){
+    const items = readItems();
+    vItems.innerHTML = '';
+    let sub = 0;
+    items.forEach(it=>{
+      const amt = (it.qty||0)*(it.price||0);
+      sub += amt;
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${escapeHtml(it.desc)}</td><td class="text-end">${(it.qty||0).toLocaleString()}</td><td class="text-end">${fmt(it.price)}</td><td class="text-end">${fmt(amt)}</td>`;
+      vItems.appendChild(tr);
+    });
+    vSubtotal.textContent = fmt(sub);
+    const disc = sub * ((parseFloat(discPct.value)||0)/100);
+    vDiscPct.textContent = (parseFloat(discPct.value)||0);
+    vDiscount.textContent = fmt(disc);
+    const tax = (sub - disc) * ((parseFloat(taxPct.value)||0)/100);
+    vTaxPct.textContent = (parseFloat(taxPct.value)||0);
+    vTax.textContent = fmt(tax);
+    const ship = parseFloat(shipping.value)||0;
+    vShipping.textContent = fmt(ship);
+    const total = sub - disc + tax + ship;
+    vTotal.textContent = fmt(total);
+  }
+
+  function escapeHtml(s=''){
+    return s.replace(/[&<>"']/g, (c)=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[c]));
+  }
+
+  // Bind inputs to preview
+  [fromText,toText,docNumber,docDate,docDue,notes,taxPct,discPct,shipping,currency,docType].forEach(el=>{
+    el.addEventListener('input', ()=>{ syncFields(); saveLocal(); });
+  });
+
+  function syncFields(){
+    applyAccent();
+    vDocNumber.textContent = docNumber.value || '—';
+    vDocDate.textContent = docDate.value || '—';
+    vDocDue.textContent = docDue.value || '—';
+    $('#vNotes').textContent = (notes.value||'').trim();
+    docTypeBadge.textContent = (docType.value||'Invoice').toUpperCase();
+    renderItems();
+    renderVisibility();
+  }
+
+  function renderVisibility(){
+    // Notes
+    const hasNotes = (notes.value||'').trim().length > 0;
+    const notesBlock = $('#notesBlock'); if(notesBlock) notesBlock.style.display = hasNotes ? '' : 'none';
+
+    // Signature
+    const sigBlock = $('#sigBlock');
+    const hasSig = !!($('#vSignature').src && $('#vSignature').src.length>0);
+    if(sigBlock) sigBlock.style.display = hasSig ? '' : 'none';
+
+    // From / To
+    const fromVal = (fromText.value||'').trim();
+    const toVal = (toText.value||'').trim();
+    vFrom.textContent = fromVal;
+    vTo.textContent = toVal;
+    const fromCol = $('#fromCol'); if(fromCol) fromCol.style.display = fromVal ? '' : 'none';
+    const toCol = $('#toCol'); if(toCol) toCol.style.display = toVal ? '' : 'none';
+    const addrRow = $('#addrRow'); if(addrRow) addrRow.style.display = (fromVal || toVal) ? '' : 'none';
+
+    // Payment block
+    const payBlock = $('#payBlock');
+    const showPay = enableQR && enableQR.checked && (payLink.value||'').trim().length>0;
+    if(payBlock) payBlock.style.display = showPay ? '' : 'none';
+  }
+
+  // QR code for payment link
+  function refreshQR(){
+    qrBox.innerHTML = '';
+    if(!enableQR || !enableQR.checked){ renderVisibility(); return; }
+    let link = (payLink.value||'').trim();
+    if(!link){ renderVisibility(); return; }
+    if(!/^[a-z]+:/i.test(link)) { link = 'https://' + link; }
+    try {
+      qr = new QRCode(qrBox, { text: link, width: 110, height: 110, correctLevel: QRCode.CorrectLevel.M });
+    } catch(err){ console.error('QR error', err); }
+    renderVisibility();
+  }
+  payLink.addEventListener('input', ()=>{ refreshQR(); saveLocal(); });
+  if(enableQR){ enableQR.addEventListener('change', ()=>{ refreshQR(); saveLocal(); }); }
+
+  // Signature pad
+  const sigPad = $('#sigPad');
+  const sigCtx = sigPad.getContext('2d');
+  sigCtx.lineWidth = 2.2; sigCtx.lineJoin='round'; sigCtx.lineCap='round';
+  let drawing = false, last={x:0,y:0};
+  function pos(e){
+    const rect = sigPad.getBoundingClientRect();
+    const x = (e.touches? e.touches[0].clientX : e.clientX) - rect.left;
+    const y = (e.touches? e.touches[0].clientY : e.clientY) - rect.top;
+    return {x: x * (sigPad.width/rect.width), y: y * (sigPad.height/rect.height)};
+  }
+  function start(e){ drawing=true; last=pos(e); }
+  function move(e){ if(!drawing) return; const p=pos(e); sigCtx.beginPath(); sigCtx.moveTo(last.x,last.y); sigCtx.lineTo(p.x,p.y); sigCtx.stroke(); last=p; }
+  function end(){ drawing=false; }
+  sigPad.addEventListener('mousedown', start); sigPad.addEventListener('mousemove', move); window.addEventListener('mouseup', end);
+  sigPad.addEventListener('touchstart', start, {passive:true}); sigPad.addEventListener('touchmove', move, {passive:true}); window.addEventListener('touchend', end, {passive:true});
+  $('#sigClear').addEventListener('click', ()=>{ sigCtx.clearRect(0,0,sigPad.width,sigPad.height); });
+  $('#sigSave').addEventListener('click', ()=>{ const data = sigPad.toDataURL('image/png'); $('#vSignature').src = data; saveLocal(); });
+
+  // Export PNG & PDF
+  async function captureInvoice(){
+    const node = invoicePaper;
+    const canvas = await html2canvas(node, {scale:2, useCORS:true, backgroundColor:'#ffffff'});
+    return canvas;
+  }
+  btnPNG.addEventListener('click', async ()=>{
+    const c = await captureInvoice();
+    const a = document.createElement('a');
+    a.download = `${docType.value||'Invoice'}-${(docNumber.value||'')}.png`;
+    a.href = c.toDataURL('image/png');
+    a.click();
+  });
+  btnPDF.addEventListener('click', async ()=>{
+    const c = await captureInvoice();
+    const imgData = c.toDataURL('image/jpeg', 0.95);
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({unit:'mm', format:'a4'});
+    const pageWidth = 210, pageHeight = 297;
+    const imgWidth = pageWidth; const imgHeight = c.height * imgWidth / c.width;
+    if(imgHeight <= pageHeight){
+      pdf.addImage(imgData, 'JPEG', 0, 0, imgWidth, imgHeight);
+    } else {
+      // rudimentary paging for very long docs
+      let y = 0;
+      while(y < c.height){
+        const pageCanvas = document.createElement('canvas');
+        pageCanvas.width = c.width; pageCanvas.height = Math.min(c.height - y, Math.round(c.width * (pageHeight/pageWidth)));
+        const ctx = pageCanvas.getContext('2d');
+        ctx.drawImage(c, 0, y, pageCanvas.width, pageCanvas.height, 0, 0, pageCanvas.width, pageCanvas.height);
+        const part = pageCanvas.toDataURL('image/jpeg', 0.95);
+        if(y>0) pdf.addPage();
+        pdf.addImage(part, 'JPEG', 0, 0, pageWidth, pageHeight);
+        y += pageCanvas.height;
+      }
+    }
+    pdf.save(`${docType.value||'Invoice'}-${(docNumber.value||'')}.pdf`);
+  });
+  btnPrint.addEventListener('click', ()=>window.print());
+
+  // Save / Load / Clear (localStorage)
+  const KEY='smart-invoice-v1';
+  function saveLocal(){
+    const data = {
+      accent: accentColor.value,
+      logo: logoImg.src && logoImg.style.display!=='none' ? logoImg.src : '',
+      docType: docType.value,
+      currency: currency.value,
+      from: fromText.value, to: toText.value,
+      number: docNumber.value, date: docDate.value, due: docDue.value,
+      pay: payLink.value,
+      tax: taxPct.value, disc: discPct.value, ship: shipping.value,
+      notes: notes.value,
+      qrEnabled: enableQR ? enableQR.checked : true,
+      items: readItems(),
+      signature: $('#vSignature').src || ''
+    };
+    localStorage.setItem(KEY, JSON.stringify(data));
+  }
+  function loadLocal(){
+    const raw = localStorage.getItem(KEY); if(!raw) return false;
+    try{ const d = JSON.parse(raw);
+      accentColor.value = d.accent || '#1E90FF';
+      docType.value = d.docType || 'Invoice';
+      currency.value = d.currency || 'USD';
+      fromText.value = d.from||''; toText.value = d.to||'';
+      docNumber.value = d.number||''; docDate.value = d.date||''; docDue.value=d.due||'';
+      payLink.value = d.pay||'';
+      taxPct.value = d.tax||0; discPct.value=d.disc||0; shipping.value=d.ship||0;
+      notes.value = d.notes||'';
+      if(typeof d.qrEnabled !== 'undefined'){ enableQR.checked = !!d.qrEnabled; }
+      itemsEditor.innerHTML=''; (d.items && d.items.length? d.items : [{desc:'Service', qty:1, price:100}]).forEach(makeItemRow);
+      if(d.logo){ logoImg.src = d.logo; logoImg.style.display='block'; if(logoPh) logoPh.style.display='none'; }
+      if(d.signature){ $('#vSignature').src = d.signature; }
+      applyAccent(); refreshQR(); syncFields(); renderItems();
+      return true;
+    }catch(err){ console.error(err); return false; }
+  }
+  btnSaveLocal.addEventListener('click', ()=>{ saveLocal(); toast('Saved to browser.'); });
+  btnLoadLocal.addEventListener('click', ()=>{ const ok=loadLocal(); toast(ok? 'Loaded.' : 'Nothing saved yet.'); });
+  btnClear.addEventListener('click', ()=>{
+    if(!confirm('Clear current form?')) return;
+    localStorage.removeItem(KEY); location.reload();
+  });
+
+  function toast(msg){
+    const el=document.createElement('div');
+    el.className='position-fixed bottom-0 end-0 m-3 alert alert-dark shadow';
+    el.textContent=msg; document.body.appendChild(el);
+    setTimeout(()=>{ el.remove(); }, 1600);
+  }
+
+  // Init defaults
+  (function init(){
+    // default dates
+    const today = new Date();
+    docDate.value = today.toISOString().slice(0,10);
+    const due = new Date(today); due.setDate(due.getDate()+7); docDue.value = due.toISOString().slice(0,10);
+    // seed one item
+    makeItemRow({desc:'Design & Development', qty: 1, price: 250});
+    makeItemRow({desc:'Hosting (Monthly)', qty: 1, price: 15});
+    // listeners
+    accentColor.addEventListener('input', ()=>{ applyAccent(); saveLocal(); });
+    currency.addEventListener('change', ()=>{ renderItems(); saveLocal(); });
+    docType.addEventListener('change', ()=>{ syncFields(); saveLocal(); });
+    // Add item button binding
+    addItemBtn.addEventListener('click', ()=>{ makeItemRow({desc:'', qty:1, price:0}); renderItems(); saveLocal(); });
+    // Generate number button & on-empty
+    if(btnGenNum){ btnGenNum.addEventListener('click', ()=>{ docNumber.value = nextInvoiceNumber(); syncFields(); saveLocal(); }); }
+    docNumber.addEventListener('blur', ()=>{ if(!docNumber.value.trim()){ docNumber.value = nextInvoiceNumber(); syncFields(); saveLocal(); } });
+
+    // try load saved
+    loadLocal();
+    if(!docNumber.value || !docNumber.value.trim()){ docNumber.value = nextInvoiceNumber(); }
+    // initial render
+    syncFields(); refreshQR(); renderItems(); saveLocal();
+  })();
+})();
+</script>
+</body>
+</html>

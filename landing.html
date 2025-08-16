@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Smart Invoice & Quote Generator — Landing Page</title>
+  <meta name="description" content="Create clean, gateway‑ready invoices in minutes. QR payments, multi‑currency, signature, PDF/PNG export. Free, no login."/>
+  <meta property="og:title" content="Smart Invoice & Quote Generator"/>
+  <meta property="og:description" content="Create clean, gateway‑ready invoices in minutes. QR payments, multi‑currency, signature, PDF/PNG export."/>
+  <meta property="og:type" content="website"/>
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Bootstrap & Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+
+  <style>
+    :root{
+      --accent:#1E90FF;                /* change once, updates everywhere */
+      --ink:#0b0b0b;
+      --muted:#6b7280;
+      --soft:#f6f7fb;
+      --radius:18px;
+    }
+    html,body{height:100%; font-family:"Barlow", system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; color:var(--ink);}
+    body{background:#fff; scroll-behavior:smooth}
+
+    /* ---------- Navbar ---------- */
+    .navbar{transition:all .25s ease}
+    .navbar.scrolled{background:#fff!important; box-shadow:0 10px 30px rgba(0,0,0,.08)}
+    .navbar .btn-cta{border-radius:999px; padding:.55rem 1rem}
+
+    /* ---------- Hero (Parallax + Overlay) ---------- */
+    .hero{position:relative; min-height:100vh; display:grid; place-items:center; overflow:hidden;}
+    .hero .bg{position:absolute; inset:0; background:url('https://images.unsplash.com/photo-1504384764586-bb4cdc1707b0?q=80&w=2400&auto=format&fit=crop') center/cover no-repeat; will-change:transform;}
+    .hero .overlay{position:absolute; inset:0; background:linear-gradient(180deg, rgba(0,0,0,.85), rgba(0,0,0,.65));}
+    .hero .content{position:relative; z-index:2; color:#fff; text-align:center; padding:0 1rem}
+    .badge-glow{display:inline-block; background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.35); color:#fff; padding:.35rem .6rem; border-radius:999px; font-weight:600; letter-spacing:.2px}
+    .hero h1{font-size:clamp(2rem, 4.2vw, 3.5rem); font-weight:800; letter-spacing:.2px; line-height:1.1; margin:.7rem 0 1rem}
+    .hero p.lead{color:#e7eefc; max-width:900px; margin-inline:auto}
+    .btn-accent{background:var(--accent); color:#fff; border:none}
+    .btn-accent:hover{filter:brightness(.95)}
+    .btn-ghost{background:rgba(255,255,255,.12); color:#fff; border:1px solid rgba(255,255,255,.35)}
+    .hero .cards{display:grid; gap:16px; grid-template-columns:repeat(3, minmax(0,1fr)); margin-top:36px}
+    .hero .card{background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.25); color:#fff; border-radius:16px}
+    @media (max-width: 992px){ .hero .cards{grid-template-columns:1fr} }
+
+    /* ---------- Section helpers ---------- */
+    .section{padding:80px 0}
+    .section-title{font-weight:800; letter-spacing:.2px; margin-bottom:10px}
+    .section-sub{color:var(--muted); max-width:820px}
+
+    /* ---------- Feature grid ---------- */
+    .feature{background:var(--soft); border-radius:var(--radius); padding:22px; height:100%; border:1px solid #edf0f7}
+    .feature i{font-size:24px; color:var(--accent)}
+
+    /* ---------- Steps (Educational) ---------- */
+    .step{display:flex; gap:14px; align-items:flex-start; padding:18px; border-radius:16px; background:#fff; border:1px solid #eef1f6}
+    .step .num{width:36px; height:36px; border-radius:50%; background:rgba(30,144,255,.12); color:var(--accent); display:grid; place-items:center; font-weight:700}
+
+    /* ---------- Benefits band ---------- */
+    .band{background:linear-gradient(180deg, #f7f9ff, #ffffff)}
+    .benefit{background:#fff; border:1px solid #eef1f6; border-radius:16px; padding:20px; height:100%}
+
+    /* ---------- Parallax break ---------- */
+    .split-parallax{position:relative; min-height:60vh; display:grid; place-items:center;}
+    .split-parallax .bg{position:absolute; inset:0; background:url('https://images.unsplash.com/photo-1527430253228-e93688616381?q=80&w=2400&auto=format&fit=crop') center/cover no-repeat; will-change:transform}
+    .split-parallax .overlay{position:absolute; inset:0; background:rgba(10,10,9,.55)}
+    .split-parallax .content{position:relative; z-index:2; color:#fff; text-align:center; padding:0 1rem}
+
+    /* ---------- Footer ---------- */
+    footer{background:#0b1020; color:#c9d3ff}
+    footer a{color:#c9d3ff; text-decoration:none}
+    .social a{display:inline-flex; width:40px; height:40px; align-items:center; justify-content:center; border-radius:50%; background:rgba(255,255,255,.08); margin-right:8px}
+
+    /* ---------- Small polish ---------- */
+    .shadow-soft{box-shadow:0 12px 40px rgba(0,0,0,.08)}
+    .icon-bullet{display:inline-flex; width:34px; height:34px; align-items:center; justify-content:center; border-radius:10px; background:rgba(30,144,255,.1); color:var(--accent)}
+
+    /* Accent-subtle helpers (like bootstrap subtle variants) */
+    .bg-accent-subtle{background:rgba(30,144,255,.08)}
+    .border-accent{border-color:rgba(30,144,255,.35)!important}
+  </style>
+</head>
+<body>
+  <!-- NAVBAR -->
+  <nav class="navbar navbar-expand-lg fixed-top bg-transparent">
+    <div class="container">
+      <a class="navbar-brand fw-bold" href="#home"><i class="fa-solid fa-receipt me-2 text-primary"></i>Smart Invoice</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav" aria-controls="nav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="nav">
+        <ul class="navbar-nav ms-auto mb-2 mb-lg-0 gap-lg-2">
+          <li class="nav-item"><a class="nav-link" href="#features">Features</a></li>
+          <li class="nav-item"><a class="nav-link" href="#education">How it helps</a></li>
+          <li class="nav-item"><a class="nav-link" href="#benefits">Benefits</a></li>
+          <li class="nav-item"><a class="nav-link" href="#faq">FAQ</a></li>
+        </ul>
+        <a href="app.html" class="btn btn-cta btn-primary ms-lg-3">Get Started</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <header id="home" class="hero">
+    <div class="bg" data-parallax></div>
+    <div class="overlay"></div>
+    <div class="content container">
+      <span class="badge-glow">No login • Works offline • Print‑ready</span>
+      <h1>Create gateway‑ready invoices in minutes.</h1>
+      <p class="lead">Upload logo, add line items, auto totals, taxes/discounts, multi‑currency, QR payments & signatures. Export PDF/PNG, save locally.</p>
+      <div class="d-flex justify-content-center gap-2 mt-2">
+        <a href="app.html" class="btn btn-accent btn-lg shadow-soft"><i class="fa-solid fa-wand-magic-sparkles me-2"></i>Try it now</a>
+        <a href="#features" class="btn btn-ghost btn-lg"><i class="fa-regular fa-circle-play me-2"></i>See features</a>
+      </div>
+      <div class="cards container mt-4">
+        <div class="card p-3"><div class="d-flex align-items-center gap-2"><span class="icon-bullet"><i class="fa-solid fa-qrcode"></i></span><strong>Scan‑to‑pay QR</strong></div><small class="text-light">Paste any payment link</small></div>
+        <div class="card p-3"><div class="d-flex align-items-center gap-2"><span class="icon-bullet"><i class="fa-solid fa-globe"></i></span><strong>Multi‑currency</strong></div><small class="text-light">USD · EUR · GBP · PKR · INR · AED</small></div>
+        <div class="card p-3"><div class="d-flex align-items-center gap-2"><span class="icon-bullet"><i class="fa-regular fa-file-pdf"></i></span><strong>Export PDF/PNG</strong></div><small class="text-light">A4 print‑safe</small></div>
+      </div>
+    </div>
+  </header>
+
+  <!-- FEATURES -->
+  <section id="features" class="section">
+    <div class="container">
+      <div class="text-center mb-4">
+        <h2 class="section-title">Everything you need to invoice fast</h2>
+        <p class="section-sub mx-auto">Built for freelancers, studios and SMBs who need professional invoices for Payoneer/Stripe and other gateways.</p>
+      </div>
+
+      <div class="row g-4">
+        <div class="col-md-6 col-lg-4"><div class="feature"><i class="fa-solid fa-hashtag"></i> <h5 class="mt-2 mb-1">Auto invoice numbers</h5><p class="text-muted mb-0">Editable generator like <code>INV-YYYYMMDD-001</code>.</p></div></div>
+        <div class="col-md-6 col-lg-4"><div class="feature"><i class="fa-regular fa-money-bill-1"></i> <h5 class="mt-2 mb-1">Multi‑currency</h5><p class="text-muted mb-0">USD, EUR, GBP, PKR, INR, AED—more on request.</p></div></div>
+        <div class="col-md-6 col-lg-4"><div class="feature"><i class="fa-solid fa-percent"></i> <h5 class="mt-2 mb-1">Tax/Discount/Shipping</h5><p class="text-muted mb-0">Totals update instantly as you type.</p></div></div>
+        <div class="col-md-6 col-lg-4"><div class="feature"><i class="fa-solid fa-qrcode"></i> <h5 class="mt-2 mb-1">QR payments</h5><p class="text-muted mb-0">Paste a payment link → QR auto‑generated.</p></div></div>
+        <div class="col-md-6 col-lg-4"><div class="feature"><i class="fa-regular fa-pen-to-square"></i> <h5 class="mt-2 mb-1">Signature pad</h5><p class="text-muted mb-0">Sign with mouse or touch. Optional on invoice.</p></div></div>
+        <div class="col-md-6 col-lg-4"><div class="feature"><i class="fa-regular fa-floppy-disk"></i> <h5 class="mt-2 mb-1">Local save/load</h5><p class="text-muted mb-0">Your data stays in the browser—no login needed.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- EDUCATIONAL / HOW IT HELPS -->
+  <section id="education" class="section band">
+    <div class="container">
+      <div class="row align-items-center g-4">
+        <div class="col-lg-6">
+          <h2 class="section-title">Why gateways ask for invoices & how this helps</h2>
+          <p class="section-sub">Payoneer and other processors often require an itemized invoice to approve payment proposals. This tool creates compliant, clear invoices in minutes.</p>
+          <div class="vstack gap-2 mt-3">
+            <div class="step"><div class="num">1</div><div><strong>Fill your details</strong><div class="text-muted">Business info, client info, invoice date & due date.</div></div></div>
+            <div class="step"><div class="num">2</div><div><strong>Add line items</strong><div class="text-muted">Services, quantities, rates, taxes/discounts/shipping.</div></div></div>
+            <div class="step"><div class="num">3</div><div><strong>Enable QR payment</strong><div class="text-muted">Paste a payment link (optional) to speed up checkout.</div></div></div>
+            <div class="step"><div class="num">4</div><div><strong>Sign & export</strong><div class="text-muted">Add a signature if needed, export PDF/PNG and send.</div></div></div>
+          </div>
+        </div>
+        <div class="col-lg-6">
+          <div class="p-3 p-lg-4 bg-white border border-2 border-accent rounded-4 shadow-soft">
+            <div class="d-flex align-items-center mb-2"><span class="icon-bullet me-2"><i class="fa-solid fa-bolt"></i></span><strong>Benefits at a glance</strong></div>
+            <ul class="mb-0 text-muted">
+              <li class="mb-1">Professional, gateway‑ready formatting</li>
+              <li class="mb-1">Reduces manual errors and back‑and‑forth</li>
+              <li class="mb-1">No accounts, no servers — privacy‑friendly</li>
+              <li class="mb-1">A4 print‑safe with beautiful typography</li>
+              <li>Works offline once loaded</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+
+  <!-- BENEFITS GRID -->
+  <section id="benefits" class="section">
+    <div class="container">
+      <div class="text-center mb-4">
+        <h2 class="section-title">Designed for speed and clarity</h2>
+        <p class="section-sub mx-auto">Modern UI with subtle animations, accessible colors, and mobile‑first layout.</p>
+      </div>
+      <div class="row g-4">
+        <div class="col-md-6 col-lg-3"><div class="benefit"><h6><i class="fa-solid fa-shield-halved me-2 text-primary"></i>Privacy‑friendly</h6><p class="text-muted mb-0">Everything stays in your browser unless you export.</p></div></div>
+        <div class="col-md-6 col-lg-3"><div class="benefit"><h6><i class="fa-solid fa-layer-group me-2 text-primary"></i>Reusable templates</h6><p class="text-muted mb-0">Save/load invoices for repeat clients.</p></div></div>
+        <div class="col-md-6 col-lg-3"><div class="benefit"><h6><i class="fa-solid fa-gauge-high me-2 text-primary"></i>Lightning fast</h6><p class="text-muted mb-0">No server calls. Instant calculations.</p></div></div>
+        <div class="col-md-6 col-lg-3"><div class="benefit"><h6><i class="fa-solid fa-mobile-screen me-2 text-primary"></i>Responsive</h6><p class="text-muted mb-0">Looks great on phones, tablets and desktops.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section id="cta" class="section bg-accent-subtle">
+    <div class="container">
+      <div class="row align-items-center g-4">
+        <div class="col-lg-8">
+          <h3 class="fw-bold mb-1">Ready to generate your next invoice?</h3>
+          <p class="mb-0 text-muted">Use the tool free. Export PDF/PNG, keep your data locally.</p>
+        </div>
+        <div class="col-lg-4 text-lg-end">
+          <a href="app.html" class="btn btn-accent btn-lg shadow-soft"><i class="fa-solid fa-file-invoice me-2"></i>Open the Generator</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section id="faq" class="section">
+    <div class="container">
+      <div class="text-center mb-4">
+        <h2 class="section-title">Frequently asked</h2>
+        <p class="section-sub mx-auto">Short answers to help you get started quickly.</p>
+      </div>
+      <div class="row g-4">
+        <div class="col-md-6">
+          <div class="p-4 rounded-4 border">
+            <h6>Does this work with Payoneer/Stripe?</h6>
+            <p class="mb-0 text-muted">Yes—export the PDF and attach it to your payment proposal or request.</p>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="p-4 rounded-4 border">
+            <h6>Where is my data stored?</h6>
+            <p class="mb-0 text-muted">In your browser via localStorage. Nothing is uploaded unless you share the file.</p>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="p-4 rounded-4 border">
+            <h6>Can I customize the currency?</h6>
+            <p class="mb-0 text-muted">Yes—pick from popular currencies in the generator. More can be added easily.</p>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="p-4 rounded-4 border">
+            <h6>Do I need to create an account?</h6>
+            <p class="mb-0 text-muted">No accounts. Just open the tool and start creating.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="pt-5 pb-4">
+    <div class="container">
+      <div class="row g-4">
+        <div class="col-lg-5">
+          <h5 class="fw-bold">Smart Invoice</h5>
+          <p class="mb-3">A tiny tool to create beautiful, gateway‑ready invoices—fast.</p>
+          <div class="social mb-3">
+            <a href="#" aria-label="Twitter"><i class="fa-brands fa-x-twitter"></i></a>
+            <a href="#" aria-label="LinkedIn"><i class="fa-brands fa-linkedin-in"></i></a>
+            <a href="#" aria-label="GitHub"><i class="fa-brands fa-github"></i></a>
+          </div>
+          <small class="text-secondary">© <span id="year"></span> Smart Invoice. All rights reserved.</small>
+        </div>
+        <div class="col-6 col-lg-3">
+          <h6 class="text-uppercase text-secondary">Product</h6>
+          <ul class="list-unstyled mb-0">
+            <li><a href="#features">Features</a></li>
+            <li><a href="#education">How it helps</a></li>
+            <li><a href="#benefits">Benefits</a></li>
+            <li><a href="#faq">FAQ</a></li>
+          </ul>
+        </div>
+        <div class="col-6 col-lg-4">
+          <h6 class="text-uppercase text-secondary">Get started</h6>
+          <p class="mb-2">Open the generator and create your first invoice in minutes.</p>
+          <a href="app.html" class="btn btn-light"><i class="fa-solid fa-file-invoice me-2"></i>Open the Generator</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // year
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    // navbar color on scroll
+    const nav = document.querySelector('.navbar');
+    function onScroll(){
+      if(window.scrollY > 10){ nav.classList.add('scrolled'); } else { nav.classList.remove('scrolled'); }
+      // parallax fallback for mobile (simulate translate)
+      document.querySelectorAll('[data-parallax]').forEach(el=>{
+        const speed = .25;                       // tweak parallax intensity
+        const y = window.scrollY * speed;
+        el.style.transform = `translate3d(0, ${y}px, 0)`;
+      });
+    }
+    onScroll();
+    window.addEventListener('scroll', onScroll, {passive:true});
+  </script>
+</body>
+</html>
